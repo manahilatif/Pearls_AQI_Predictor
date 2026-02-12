@@ -1,4 +1,13 @@
-.env
 __pycache__/
-*.pyc
-.ipynb_checkpoints/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+*.pkl
+models/*.pkl
+.cache*
+.DS_Store
+src/features/debug_fs.py
+src/models/debug_tf.py
