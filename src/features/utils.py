@@ -9,12 +9,20 @@ def fetch_weather_data(lat, lon, api_key):
     # Weather
     weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
     weather_response = requests.get(weather_url)
-    weather_data = weather_response.json()
+    if weather_response.status_code != 200:
+        print(f"Error fetching weather data: {weather_response.status_code} - {weather_response.text}")
+        weather_data = {}
+    else:
+        weather_data = weather_response.json()
 
     # AQI
     aqi_url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={api_key}"
     aqi_response = requests.get(aqi_url)
-    aqi_data = aqi_response.json()
+    if aqi_response.status_code != 200:
+        print(f"Error fetching AQI data: {aqi_response.status_code} - {aqi_response.text}")
+        aqi_data = {}
+    else:
+        aqi_data = aqi_response.json()
 
     return weather_data, aqi_data
 
