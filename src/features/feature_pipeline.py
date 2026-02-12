@@ -15,9 +15,9 @@ HOPSWORKS_API_KEY = os.getenv("HOPSWORKS_API_KEY")
 HOPSWORKS_PROJECT_NAME = os.getenv("HOPSWORKS_PROJECT_NAME")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-# Default location (can be made configurable)
-LAT = 51.5074 # London
-LON = -0.1278
+# Lahore Coordinates
+LAT = 31.5204
+LON = 74.3587
 
 def run_feature_pipeline():
     if not HOPSWORKS_API_KEY or not OPENWEATHER_API_KEY:

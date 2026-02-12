@@ -18,8 +18,8 @@ load_dotenv()
 HOPSWORKS_API_KEY = os.getenv("HOPSWORKS_API_KEY")
 HOPSWORKS_PROJECT_NAME = os.getenv("HOPSWORKS_PROJECT_NAME")
 
-LAT = 51.5074 # London
-LON = -0.1278
+LAT = 31.5204 # Lahore
+LON = 74.3587
 
 def fetch_historical_data(start_date, end_date):
     """
@@ -52,12 +52,21 @@ def fetch_historical_data(start_date, end_date):
 
     print(f"Fetching historical data from {start_date} to {end_date}...")
     
-    weather_responses = openmeteo.weather_api(weather_url, params=weather_params)
-    aqi_responses = openmeteo.weather_api(aqi_url, params=aqi_params) # Note: Library uses same client for both
+    try:
+        weather_responses = openmeteo.weather_api(weather_url, params=weather_params)
+        aqi_responses = openmeteo.weather_api(aqi_url, params=aqi_params)
+    except Exception as e:
+        print(f"Error calling Open-Meteo API: {e}")
+        return pd.DataFrame() # Return empty on error to avoid crash
 
     # Process Weather Data
+    if not weather_responses:
+         print("No weather data returned.")
+         return pd.DataFrame()
+
     response = weather_responses[0]
     hourly = response.Hourly()
+    print(f"Weather data points: {hourly.Variables(0).ValuesAsNumpy().size}")
     
     hourly_data = {"datetime": pd.date_range(
         start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
@@ -103,19 +112,22 @@ def fetch_historical_data(start_date, end_date):
     aqi_df = pd.DataFrame(data = aqi_data)
 
     # Merge DataFrames
+    print("Weather DF Head:")
+    print(weather_df.head())
+    print("AQI DF Head:")
+    print(aqi_df.head())
+    
     merged_df = pd.merge(weather_df, aqi_df, on="datetime")
     
-    # Drop rows with NaN if any (Open-Meteo might have gaps)
-    merged_df.dropna(inplace=True)
+    # Handle missing values
+    print("Missing values before filling:")
+    print(merged_df.isna().sum())
+    
+    merged_df = merged_df.ffill().bfill().fillna(0)
     
     # Feature Engineering
     merged_df = engineer_features(merged_df)
     
-    # Save local copy for fallback
-    os.makedirs("data/processed", exist_ok=True)
-    merged_df.to_csv("data/processed/aqi_history.csv", index=False)
-    print("Saved local cache to data/processed/aqi_history.csv")
-
     return merged_df
 
 def backfill_feature_store():
@@ -123,9 +135,9 @@ def backfill_feature_store():
         print("API keys missing.")
         return
 
-    # Backfill last 30 days
-    end_date = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d") # 90 days of history
+    # Backfill from October to January
+    start_date = "2025-10-01"
+    end_date = "2026-01-31"
 
     df = fetch_historical_data(start_date, end_date)
     print("Data fetched successfully:")

@@ -1,0 +1,31 @@
+name: Feature Pipeline
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Run every hour
+  workflow_dispatch:
+
+jobs:
+  feature_pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Feature Pipeline
+        env:
+          HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+          HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+        run: python src/features/feature_pipeline.py
