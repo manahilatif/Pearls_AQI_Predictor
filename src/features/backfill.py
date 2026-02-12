@@ -135,10 +135,9 @@ def backfill_feature_store():
         print("API keys missing.")
         return
 
-    # Backfill last 30 days
-    # Open-Meteo Archive API has a delay, so use 5 days ago as end date
-    end_date = (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=35)).strftime("%Y-%m-%d") # 30 days of history
+    # Backfill from October to January
+    start_date = "2025-10-01"
+    end_date = "2026-01-31"
 
     df = fetch_historical_data(start_date, end_date)
     print("Data fetched successfully:")

@@ -75,7 +75,7 @@ def create_lstm_model(input_shape, output_shape):
     model.compile(optimizer='adam', loss='mse')
     return model
 
-def train_and_evaluate():
+def train_and_evaluate(df=None):
     if not HOPSWORKS_API_KEY:
         print("API keys missing.")
         return
@@ -86,16 +86,19 @@ def train_and_evaluate():
     mr = project.get_model_registry()
 
     try:
-        # Fetch data
-        print("Fetching data from Feature Store...")
-        aqi_fg = fs.get_feature_group(name="aqi_features", version=1)
-        query = aqi_fg.select_all()
-        
-        try:
-             df = query.read()
-        except:
-             print("Arrow Flight failed, trying Hive...")
-             df = query.read(read_options={"use_hive": True})
+        if df is None:
+            # Fetch data
+            print("Fetching data from Feature Store...")
+            aqi_fg = fs.get_feature_group(name="aqi_features", version=1)
+            query = aqi_fg.select_all()
+            
+            try:
+                 df = query.read()
+            except:
+                 print("Arrow Flight failed, trying Hive...")
+                 df = query.read(read_options={"use_hive": True})
+        else:
+            print("Using provided DataFrame...")
         
         # Sort by time
         df = df.sort_values(by="datetime")
@@ -180,12 +183,8 @@ def train_and_evaluate():
         metrics_lstm = evaluate_models(y_test, y_pred_lstm, "LSTM")
         
         # Save and Register LSTM
-        lstm_path = os.path.join(model_dir, "lstm_model")
+        lstm_path = os.path.join(model_dir, "lstm_model.keras")
         lstm_model.save(lstm_path)
-        
-        # Archive LSTM folder to zip for Hopsworks
-        import shutil
-        shutil.make_archive(lstm_path, 'zip', lstm_path)
         
         print("Registering LSTM...")
         # Note: Tensorflow schema support might need specific handling or just use same schema since input/output structure is same conceptually
@@ -196,7 +195,7 @@ def train_and_evaluate():
             model_schema=model_schema,
             metrics=metrics_lstm
         )
-        hs_model_lstm.save(f"{lstm_path}.zip")
+        hs_model_lstm.save(lstm_path)
 
         print("All models trained and registered.")
 
