@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 import hopsworks
 import pandas as pd
 from dotenv import load_dotenv
-from src.features.utils import fetch_weather_data, process_data
+from src.features.utils import fetch_weather_data, process_data, engineer_features
 
 # Load environment variables
 load_dotenv()
@@ -28,6 +28,10 @@ def run_feature_pipeline():
     try:
         weather_data, aqi_data = fetch_weather_data(LAT, LON, OPENWEATHER_API_KEY)
         df = process_data(weather_data, aqi_data)
+        
+        # Feature Engineering
+        df = engineer_features(df)
+        
         print("Data fetched successfully:")
         print(df.head())
     except Exception as e:
@@ -43,8 +47,10 @@ def run_feature_pipeline():
         aqi_fg = fs.get_or_create_feature_group(
             name="aqi_features",
             version=1,
-            primary_key=["datetime"],
-            description="AQI and Weather features"
+            primary_key=["unix_time"],
+            description="AQI and Weather features",
+            online_enabled=True,
+            event_time="datetime"
         )
         print("Feature Group retrieved/created.")
         

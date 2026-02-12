@@ -60,3 +60,16 @@ def process_data(weather_data, aqi_data):
     }
     
     return pd.DataFrame([data])
+
+def engineer_features(df):
+    """
+    Adds derived features to the DataFrame.
+    """
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    df['unix_time'] = df['datetime'].astype('int64') // 10**6 # Convert nanoseconds to milliseconds
+    df['hour'] = df['datetime'].dt.hour
+    df['day'] = df['datetime'].dt.day
+    df['month'] = df['datetime'].dt.month
+    df['weekday'] = df['datetime'].dt.dayofweek
+    
+    return df

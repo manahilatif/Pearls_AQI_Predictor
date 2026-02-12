@@ -8,3 +8,6 @@ requests
 xgboost
 python-dotenv
 pyyaml
+openmeteo-requests
+requests-cache
+retry-requests
