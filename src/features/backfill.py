@@ -110,6 +110,11 @@ def fetch_historical_data(start_date, end_date):
     
     # Feature Engineering
     merged_df = engineer_features(merged_df)
+    
+    # Save local copy for fallback
+    os.makedirs("data/processed", exist_ok=True)
+    merged_df.to_csv("data/processed/aqi_history.csv", index=False)
+    print("Saved local cache to data/processed/aqi_history.csv")
 
     return merged_df
 
@@ -146,7 +151,7 @@ def backfill_feature_store():
             version=1,
             primary_key=["unix_time"],
             description="AQI and Weather features",
-            online_enabled=True,
+            online_enabled=False,
             event_time="datetime"
         )
         
