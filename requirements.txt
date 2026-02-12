@@ -1,0 +1,10 @@
+streamlit
+hopsworks
+scikit-learn
+tensorflow
+shap
+pandas
+requests
+xgboost
+python-dotenv
+pyyaml
