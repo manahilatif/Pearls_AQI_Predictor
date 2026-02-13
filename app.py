@@ -26,15 +26,20 @@ st.sidebar.header('Configuration')
 # Connect to Hopsworks
 @st.cache_resource
 def get_hopsworks_project():
-    try:
-        project = hopsworks.login(
-            project=os.getenv("HOPSWORKS_PROJECT_NAME"),
-            api_key_value=os.getenv("HOPSWORKS_API_KEY")
-        )
-        return project
-    except Exception as e:
-        st.error(f"Failed to connect to Hopsworks: {e}")
-        return None
+    import time
+    for i in range(3):
+        try:
+            project = hopsworks.login(
+                project=os.getenv("HOPSWORKS_PROJECT_NAME"),
+                api_key_value=os.getenv("HOPSWORKS_API_KEY")
+            )
+            return project
+        except Exception as e:
+            if i < 2:
+                time.sleep(2)
+                continue
+            st.error(f"Failed to connect to Hopsworks after 3 attempts: {e}")
+            return None
 
 project = get_hopsworks_project()
 
@@ -91,19 +96,27 @@ if project:
         }
         
         # Retrieve model from registry
-        # Use simple get_model which fetches the latest version by default or specified version
-        # We registered version 1 or 2, get_best_model might be better but get_model is safer for now
-        model_meta = mr.get_model(model_name_map[name], version=None) 
-        model_dir = model_meta.download()
+        try:
+            # Use simple get_model which fetches the latest version by default or specified version
+            # We registered version 1 or 2, get_best_model might be better but get_model is safer for now
+            model_meta = mr.get_model(model_name_map[name], version=None) 
+            model_dir = model_meta.download()
+        except Exception as e:
+            st.warning(f"Model {name} not found in registry. Has the training pipeline run successfully?")
+            return None
         
         # Load model object
-        if name == "LSTM":
-            import tensorflow as tf
-            model_path = os.path.join(model_dir, "lstm_model.keras")
-            return tf.keras.models.load_model(model_path)
-        else:
-            model_path = os.path.join(model_dir, f"{name}_model.pkl")
-            return joblib.load(model_path)
+        try:
+            if name == "LSTM":
+                import tensorflow as tf
+                model_path = os.path.join(model_dir, "lstm_model.keras")
+                return tf.keras.models.load_model(model_path)
+            else:
+                model_path = os.path.join(model_dir, f"{name}_model.pkl")
+                return joblib.load(model_path)
+        except Exception as e:
+            st.error(f"Failed to load model file locally: {e}")
+            return None
 
     if st.sidebar.button("Run Prediction"):
         with st.spinner(f'Loading {model_name} model and generating forecast...'):
