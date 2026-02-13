@@ -1,11 +1,12 @@
 streamlit
 hopsworks
 scikit-learn
-tensorflow
+tensorflow-cpu
 shap
 pandas
 requests
 xgboost
+seaborn
 python-dotenv
 pyyaml
 openmeteo-requests
