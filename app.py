@@ -111,17 +111,70 @@ if project:
                 model = load_model(model_name)
                 st.success(f"{model_name} loaded successfully!")
                 
-                # PREDICTION LOGIC TO BE IMPLEMENTED
-                st.info("Prediction logic creates features from the latest data window.")
+                # Prepare Input Data
+                # The model expects daily averages of features
+                # We'll take the average of the last 24 hours of data available
+                latest_day = df.tail(24).mean(numeric_only=True)
                 
-                # Placeholder for prediction
-                # In real implementation:
-                # 1. Prepare X input from df.tail()
-                # 2. model.predict(X)
-                # 3. Display result
+                # Exclude targets and non-features if present in the mean
+                # Features used in training:
+                # temp, humidity, pressure, wind_speed, wind_deg, clouds, 
+                # pm10, pm2_5, co, no2, so2, o3, nh3, aqi, day, month, weekday
+                # Note: 'unix_time' was dropped in training.
                 
+                # Ensure we have all columns in correct order.
+                # We rely on the fact that the feature group schema hasn't changed.
+                # Ideally we should read the model's input schema, but for now we reconstruct based on training logic.
+                
+                feature_cols = [c for c in latest_day.index if c not in ['aqi_next_day', 'aqi_next_2_days', 'aqi_next_3_days', 'unix_time', 'datetime']]
+                
+                # We need to ensure 'day', 'month', 'weekday' are correct for the prediction context (NEXT day?)
+                # Actually, the model uses 'current day' features to predict 'next days'.
+                # So we use the features of the *latest available day*.
+                
+                input_data = latest_day[feature_cols].values.reshape(1, -1)
+                
+                prediction = None
+                
+                if model_name == "LSTM":
+                    # Reshape for LSTM: [samples, time steps, features]
+                    # Training used 1 time step
+                    input_data = input_data.reshape((1, 1, input_data.shape[1]))
+                    prediction = model.predict(input_data)
+                else:
+                    prediction = model.predict(input_data)
+                
+                # Display Results
+                st.subheader("AQI Forecast")
+                cols = st.columns(3)
+                
+                days = ["Tomorrow", "Day After Tomorrow", "3 Days from Now"]
+                
+                # Prediction is likely shape (1, 3) or (3,)
+                if prediction.ndim > 1:
+                    preds = prediction[0]
+                else:
+                    preds = prediction
+                    
+                for i, day in enumerate(days):
+                    with cols[i]:
+                        aqi_val = preds[i]
+                        st.metric(label=day, value=f"{aqi_val:.1f}")
+                        
+                        # Color code based on AQI
+                        if aqi_val <= 50:
+                            st.success("Good")
+                        elif aqi_val <= 100:
+                            st.warning("Moderate")
+                        elif aqi_val <= 150:
+                            st.warning("Unhealthy for Sensitive Groups")
+                        else:
+                            st.error("Unhealthy/Hazardous")
+                            
             except Exception as e:
                 st.error(f"Error loading model or predicting: {e}")
+                import traceback
+                st.text(traceback.format_exc())
 
 else:
     st.warning("Please check your .env file for Hopsworks credentials.")

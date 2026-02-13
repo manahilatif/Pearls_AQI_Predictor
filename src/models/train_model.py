@@ -203,6 +203,7 @@ def train_and_evaluate(df=None):
         print(f"Error in training pipeline: {e}")
         import traceback
         traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     train_and_evaluate()
