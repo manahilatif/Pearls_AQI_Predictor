@@ -20,13 +20,15 @@ LAT = 31.5204
 LON = 74.3587
 
 def run_feature_pipeline():
-    if not HOPSWORKS_API_KEY or not OPENWEATHER_API_KEY:
-        print("Error: API keys not found. Please set HOPSWORKS_API_KEY and OPENWEATHER_API_KEY in .env file.")
+    if not HOPSWORKS_API_KEY:
+        print("Error: HOPSWORKS_API_KEY not found. Please set it in .env file.")
         return
 
     print("Fetching data...")
+    print("Fetching data...")
     try:
-        weather_data, aqi_data = fetch_weather_data(LAT, LON, OPENWEATHER_API_KEY)
+        # Fetch directly from Open-Meteo (no key needed)
+        weather_data, aqi_data = fetch_weather_data(LAT, LON)
         df = process_data(weather_data, aqi_data)
         
         # Feature Engineering
