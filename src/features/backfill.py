@@ -135,8 +135,8 @@ def backfill_feature_store():
         print("API keys missing.")
         return
 
-    # Backfill from October to January
-    start_date = "2025-10-01"
+    # Backfill from 2023 to 2026 (3 Years)
+    start_date = "2023-01-01"
     end_date = "2026-01-31"
 
     df = fetch_historical_data(start_date, end_date)
