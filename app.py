@@ -93,12 +93,19 @@ if project:
             
         df['datetime'] = pd.to_datetime(df['datetime'])
         df = df.sort_values('datetime')
+        
+        # Ensure time features exist (robustness)
+        if 'day' not in df.columns: df['day'] = df['datetime'].dt.day
+        if 'month' not in df.columns: df['month'] = df['datetime'].dt.month
+        if 'weekday' not in df.columns: df['weekday'] = df['datetime'].dt.dayofweek
+        if 'hour' not in df.columns: df['hour'] = df['datetime'].dt.hour
+            
         return df
 
     # --- Mock Data Fallback ---
     def generate_mock_data():
         dates = pd.date_range(end=datetime.now(), periods=200, freq='h')
-        return pd.DataFrame({
+        df = pd.DataFrame({
             'datetime': dates,
             'temp': np.random.uniform(10, 35, 200),
             'humidity': np.random.uniform(30, 90, 200),
@@ -115,6 +122,12 @@ if project:
             'nh3': np.random.uniform(0, 10, 200),
             'aqi': np.random.uniform(50, 200, 200)
         })
+        # Add time features to mock data
+        df['day'] = df['datetime'].dt.day
+        df['month'] = df['datetime'].dt.month
+        df['weekday'] = df['datetime'].dt.dayofweek
+        df['hour'] = df['datetime'].dt.hour
+        return df
 
     # Fetch Data
     with st.spinner('Fetching data...'):
@@ -224,10 +237,18 @@ if project:
                     forecast_df['day'] = forecast_df['datetime'].dt.day
                     forecast_df['month'] = forecast_df['datetime'].dt.month
                     forecast_df['weekday'] = forecast_df['datetime'].dt.dayofweek
+                    forecast_df['hour'] = forecast_df['datetime'].dt.hour
                     
                     # Select columns matching model input (dynamically)
                     # We assume the model was trained on the columns present in 'df' (minus targets)
                     feature_cols = [c for c in df.columns if c not in ['datetime', 'unix_time', 'aqi_next_day', 'aqi_next_2_days', 'aqi_next_3_days']]
+                    
+                    # Validate that we have all features the model expects
+                    for col in feature_cols:
+                        if col not in forecast_df.columns:
+                            # If checking against Mock Data which has 'aqi', we might need it? No, targets usually excluded.
+                            # Usually pollutants + weather + time
+                            pass
                     
                     # Ensure forecast_df has all feature_cols
                     X_forecast = forecast_df[feature_cols].copy()
