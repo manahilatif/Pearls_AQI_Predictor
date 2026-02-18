@@ -151,21 +151,30 @@ if project:
             model_dir = model_char.download()
             metrics = model_char.metrics # Fetch stored metrics
         except Exception as e:
-            st.warning(f"Model {name} not found in registry. Has the training pipeline run successfully?")
+            st.error(f"🔴 Registry connection failed for {name}: {e}")
+            st.warning("This is likely a network timeout locally. It will work in the Cloud.")
             return None, None
         
         # Load model object
         try:
+            # Debug: Check files
+            # st.write(f"Downloaded files: {os.listdir(model_dir)}")
+            
             if name == "LSTM":
                 import tensorflow as tf
                 model_path = os.path.join(model_dir, "lstm_model.keras")
                 model = tf.keras.models.load_model(model_path)
             else:
                 model_path = os.path.join(model_dir, f"{name}_model.pkl")
+                if not os.path.exists(model_path):
+                     # Try finding any pkl file
+                     files = [f for f in os.listdir(model_dir) if f.endswith('.pkl')]
+                     if files: model_path = os.path.join(model_dir, files[0])
                 model = joblib.load(model_path)
             return model, metrics
         except Exception as e:
-            st.error(f"Failed to load model file locally: {e}")
+            st.error(f"🔴 Failed to load model file locally: {e}")
+            st.write(f"Contents of {model_dir}: {os.listdir(model_dir)}")
             return None, None
 
     # Load selected model
@@ -182,7 +191,7 @@ if project:
     st.header("📊 Exploratory Data Analysis")
     
     # Feature Correlation Heatmap (using reliable features)
-    if 'aqi' in df.columns:
+    if not df.empty and 'aqi' in df.columns:
         import seaborn as sns
         
         cols_to_corr = ['temp', 'humidity', 'wind_speed', 'pm2_5', 'pm10', 'no2', 'so2', 'o3', 'aqi']
@@ -194,6 +203,10 @@ if project:
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
             st.pyplot(fig)
+        else:
+             st.warning("Not enough columns for correlation analysis.")
+    else:
+        st.warning("Dataframe is empty or missing AQI column. Cannot show EDA.")
 
     # Prediction Section
     if st.button("Run Prediction"):
@@ -230,6 +243,28 @@ if project:
                             elif aqi_val <= 100: st.warning("Moderate")
                             elif aqi_val <= 150: st.warning("Unhealthy for SG")
                             else: st.error("Unhealthy")
+
+                    # Visualizing History + Forecast
+                    st.subheader("📉 History + 🚀 Future Projection")
+                    
+                    # Prepare data for plot
+                    future_dates = [datetime.now() + timedelta(days=i+1) for i in range(3)]
+                    history_df = df.tail(7) # Last 7 days
+                    future_df = pd.DataFrame({
+                        'datetime': future_dates,
+                        'aqi': preds,
+                        'type': ['Forecast'] * 3
+                    })
+                    
+                    # Combine for plotting (simplified)
+                    fig, ax = plt.subplots(figsize=(10, 5))
+                    ax.plot(history_df['datetime'], history_df['aqi'], label='History (Actual)', marker='o')
+                    ax.plot(future_df['datetime'], future_df['aqi'], label='Forecast (Predicted)', linestyle='--', marker='x', color='red')
+                    ax.set_title("AQI Trend: Past 7 Days -> Next 3 Days")
+                    ax.legend()
+                    st.pyplot(fig)
+                    
+                    st.info("ℹ️ **Note:** The model uses *past* data (History) to predict *future* AQI. The chart above shows how the trend is expected to continue.")
                     
                     # SHAP Analysis (Beta)
                     if model_name in ["RandomForest", "XGBoost", "Ridge"]:

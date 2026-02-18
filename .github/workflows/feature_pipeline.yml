@@ -25,6 +25,6 @@ jobs:
 
       - name: Run Feature Pipeline
         env:
-          HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
-          HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
+          HOPSWORKS_API_KEY: '${{ secrets.HOPSWORKS_API_KEY }}'
+          HOPSWORKS_PROJECT_NAME: 'aqiPrediction10P'
         run: python src/features/feature_pipeline.py

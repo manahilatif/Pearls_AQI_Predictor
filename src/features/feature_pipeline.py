@@ -41,8 +41,21 @@ def run_feature_pipeline():
         return
 
     print("Connecting to Hopsworks...")
-    project = hopsworks.login(project=HOPSWORKS_PROJECT_NAME, api_key_value=HOPSWORKS_API_KEY)
-    fs = project.get_feature_store()
+    print(f"Project Name: '{HOPSWORKS_PROJECT_NAME}'")
+    if HOPSWORKS_API_KEY:
+        print(f"API Key found (Length: {len(HOPSWORKS_API_KEY)})")
+    else:
+        print("API Key is missing/empty!")
+
+    try:
+        project = hopsworks.login(project=HOPSWORKS_PROJECT_NAME, api_key_value=HOPSWORKS_API_KEY)
+        fs = project.get_feature_store()
+    except Exception as e:
+        print(f"Login failed: {e}")
+        # Print more details if available
+        import traceback
+        traceback.print_exc()
+        return
 
     # Define Feature Group
     try:
