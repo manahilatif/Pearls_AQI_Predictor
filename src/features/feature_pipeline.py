@@ -25,7 +25,7 @@ def run_feature_pipeline():
         return
 
     print("Fetching data...")
-    print("Fetching data...")
+    
     try:
         # Fetch directly from Open-Meteo (no key needed)
         weather_data, aqi_data = fetch_weather_data(LAT, LON)

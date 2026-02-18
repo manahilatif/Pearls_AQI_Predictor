@@ -1,0 +1,20 @@
+[global]
+# Streamlit configuration for deployment
+
+[server]
+# Server configuration
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+# Browser configuration
+gatherUsageStats = false
+
+[theme]
+# App theme
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif
