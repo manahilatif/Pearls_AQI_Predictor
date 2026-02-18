@@ -11,6 +11,7 @@ import hopsworks
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from src.features.utils import engineer_features
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
@@ -37,7 +38,7 @@ def fetch_historical_data(start_date, end_date):
         "longitude": LON,
         "start_date": start_date,
         "end_date": end_date,
-        "hourly": ["temperature_2m", "relative_humidity_2m", "pressure_msl", "surface_pressure", "wind_speed_10m", "wind_direction_10m", "cloud_cover"]
+        "hourly": ["temperature_2m", "relative_humidity_2m", "pressure_msl", "wind_speed_10m", "wind_direction_10m", "cloud_cover"]
     }
     
     # AQI API (Air Quality)
@@ -80,7 +81,6 @@ def fetch_historical_data(start_date, end_date):
         "temp": hourly.Variables(0).ValuesAsNumpy(),
         "humidity": hourly.Variables(1).ValuesAsNumpy(),
         "pressure": hourly.Variables(2).ValuesAsNumpy(),
-        # "surface_pressure": hourly.Variables(3).ValuesAsNumpy(), # Redundant
         "wind_speed": hourly.Variables(4).ValuesAsNumpy(),
         "wind_deg": hourly.Variables(5).ValuesAsNumpy(),
         "clouds": hourly.Variables(6).ValuesAsNumpy()
@@ -137,7 +137,7 @@ def backfill_feature_store():
 
     # Backfill from 2023 to 2026 (3 Years)
     start_date = "2023-01-01"
-    end_date = "2026-01-31"
+    end_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
     df = fetch_historical_data(start_date, end_date)
     print("Data fetched successfully:")
