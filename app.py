@@ -77,6 +77,20 @@ def get_hopsworks_project():
 
 project = get_hopsworks_project()
 
+if not project:
+    st.warning("⚠️ **HOPWORKS CONNECTION FAILED**")
+    st.info("If you are on Streamlit Cloud, please check your **Secrets** settings.")
+    st.markdown("""
+    **To Fix:**
+    1. Go to your App Dashboard on Streamlit Cloud.
+    2. Click 'Manage App' -> 'Settings' -> 'Secrets'.
+    3. Add the following:
+    ```toml
+    HOPSWORKS_API_KEY = "your_key_here"
+    HOPSWORKS_PROJECT_NAME = "aqiPrediction10P"
+    ```
+    """)
+
 if project:
     fs = project.get_feature_store()
     mr = project.get_model_registry()
@@ -247,11 +261,26 @@ if project:
                     for col in feature_cols:
                         if col not in forecast_df.columns:
                             # If checking against Mock Data which has 'aqi', we might need it? No, targets usually excluded.
-                            # Usually pollutants + weather + time
                             pass
                     
                     # Ensure forecast_df has all feature_cols
                     X_forecast = forecast_df[feature_cols].copy()
+                    
+                    # --- CRITICAL FIX: Reorder columns to match training ---
+                    if hasattr(model, "feature_names_in_"):
+                        # Scikit-learn models store this
+                        required_features = model.feature_names_in_
+                        # Ensure we have all required features
+                        missing = [f for f in required_features if f not in X_forecast.columns]
+                        if missing:
+                            st.error(f"Missing features for model: {missing}")
+                            # Fallback: fill missing with 0
+                            for m in missing: X_forecast[m] = 0
+                        X_forecast = X_forecast[required_features]
+                    elif model_name == "XGBoost":
+                         # XGBoost might handle via booster but safer to rely on consistency if feature_names_in_ absent
+                         pass
+
                     
                     # 3. Predict
                     if model_name == "LSTM":
