@@ -1,5 +1,5 @@
 streamlit
-hopsworks
+hopsworks>=3.7.0
 scikit-learn
 tensorflow-cpu
 shap
