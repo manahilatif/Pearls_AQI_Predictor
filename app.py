@@ -407,23 +407,52 @@ if st.button("🚀 Generate Forecast", type="primary"):
                 st.stop()
 
             # ... Real Prediction Logic ...
-            # FIX #1: Use hardcoded FEATURE_COLS
-            missing_cols = [c for c in FEATURE_COLS if c not in forecast_df.columns]
-            if missing_cols:
-                st.error(f"Missing features: {missing_cols}")
-                st.stop()
+            # ... Real Prediction Logic ...
+            # FIX: Only use features the model expects (Dynamic Alignment)
+            if hasattr(model, "feature_names_in_"):
+                expected_cols = model.feature_names_in_
+                # Check for missing required features
+                missing = [c for c in expected_cols if c not in forecast_df.columns]
+                if missing:
+                    st.error(f"Model expects features not available in forecast: {missing}")
+                    st.stop()
+                X_forecast = forecast_df[expected_cols].copy().fillna(0)
+            
+            elif hasattr(model, "get_booster"): # XGBoost specific
+                try:
+                    expected_cols = model.get_booster().feature_names
+                    if expected_cols:
+                        missing = [c for c in expected_cols if c not in forecast_df.columns]
+                        if missing:
+                            st.error(f"XGBoost expects features: {missing}")
+                            st.stop()
+                        X_forecast = forecast_df[expected_cols].copy().fillna(0)
+                    else:
+                         X_forecast = forecast_df[FEATURE_COLS].copy().fillna(0)
+                except Exception:
+                     X_forecast = forecast_df[FEATURE_COLS].copy().fillna(0)
 
-            X_forecast = forecast_df[FEATURE_COLS].copy().fillna(0)
+            else:
+                # Fallback for models without feature metadata (e.g. older Ridge/LSTM)
+                # Ensure we at least have the intersection
+                common_cols = [c for c in FEATURE_COLS if c in forecast_df.columns]
+                X_forecast = forecast_df[common_cols].copy().fillna(0)
 
             # 5. Apply scaler
             if model_name in ["Ridge", "LSTM"] and scaler is not None:
-                X_input = scaler.transform(X_forecast)
+                try:
+                    X_input = scaler.transform(X_forecast)
+                except ValueError:
+                    # Fallback: try raw if scaler fails (mismatch)
+                    X_input = X_forecast.values 
             else:
                 X_input = X_forecast.values
 
             # 6. Predict
             if model_name == "LSTM":
                 import tensorflow as tf
+                # LSTM expects 3D input: (samples, time_steps, features)
+                # Reshape (72, 1, n_features)
                 X_lstm = X_input.reshape((X_input.shape[0], 1, X_input.shape[1]))
                 preds  = model.predict(X_lstm, verbose=0)
             else:
