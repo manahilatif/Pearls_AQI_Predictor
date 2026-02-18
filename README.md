@@ -96,4 +96,4 @@ This repository includes configured workflows in `.github/workflows/`:
 Contributions are welcome! Please open an issue or submit a pull request.
 
 ---
-*Built with ❤️ for 10Pearls Shine Internship (Dec 2025 - Feb 2026)*
+*Built with as a project for 10Pearls Shine Internship (Dec 2025 - Feb 2026)*
