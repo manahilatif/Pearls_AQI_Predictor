@@ -3,7 +3,7 @@
 A robust, end-to-end Machine Learning pipeline and interactive dashboard to forecast the Air Quality Index (AQI) for Lahore, Pakistan.
 
 ## 🚀 Live Demo
-*[Insert your Streamlit App Link Here]*
+https://pearlsshineaqipredictor.streamlit.app/
 
 ## 📖 Overview
 Air quality in Lahore is a critical concern. This project automates the collection of weather and pollution data, trains multiple ML models (including Deep Learning), and serves predictions via a user-friendly web interface.
@@ -96,4 +96,4 @@ This repository includes configured workflows in `.github/workflows/`:
 Contributions are welcome! Please open an issue or submit a pull request.
 
 ---
-*Built with ❤️ for 10Pearls Shine Internship (Dec 2025 - Feb 2026)*
+*Built with as a project for 10Pearls Shine Internship (Dec 2025 - Feb 2026)*
